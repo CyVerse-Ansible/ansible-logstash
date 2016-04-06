@@ -1,0 +1,25 @@
+---
+galaxy_info:
+  author: Jonathan Strootman
+  description: Installs and configures Logstash
+  company: CyVerse
+  license: license (BSD)
+  min_ansible_version: 2.0
+  platforms:
+  - name: EL
+    versions:
+    - 7
+  - name: Ubuntu
+    versions:
+    - wily
+    - xenial
+  
+  galaxy_tags: 
+      - logstash
+      - elastic
+      - elasticsearch
+
+dependencies: 
+    - role: cyverse.geoip
+      when: logstash_geoip | default(false)
+

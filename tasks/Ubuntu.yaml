@@ -1,0 +1,24 @@
+---
+- name: Add Logstash repo key
+  apt_key: 
+      url: "{{logstash_gpgkey}}" 
+      state: present
+  tags: 
+     - install
+
+- stat: "path=/etc/apt/sources.list.d/logstash-{{logstash_version}}.list"
+  register: repo_st
+- name: Add Logstash repo
+  when: repo_st.stat.exists is defined and not repo_st.stat.exists
+  shell: "echo {{logstash_apt_repo}} | tee -a /etc/apt/sources.list.d/logstash-{{logstash_version}}.list"
+  tags: 
+     - install
+
+- name: Install logstash
+  apt: 
+    name: logstash
+    update_cache: yes
+    state: present
+  tags: 
+     - install
+

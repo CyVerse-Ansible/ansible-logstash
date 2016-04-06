@@ -1,0 +1,10 @@
+---
+# defaults file for ansible-logstash
+logstash_version: "2.3"
+logstash_install: true
+logstash_elasticsearch_host: "localhost:9200"
+logstash_base_dir: "/opt/logstash"
+logstash_cfg_dir: "/etc/logstash/conf.d"
+logstash_apt_repo: "deb http://packages.elastic.co/logstash/{{logstash_version}}/debian stable main"
+ls_conf_dir: "/etc/logstash/conf.d"
+logstash_clean_cfg_dir: false

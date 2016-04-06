@@ -1,0 +1,8 @@
+---
+- hosts: localhost
+  remote_user: root
+  vars:
+      logstash_cfg_template_glob: "/etc/ansible/roles/role_under_test/tests/templates/*.conf"
+      logstash_elasticsearch_host: "some.host.org:9200"
+  roles:
+    - role_under_test

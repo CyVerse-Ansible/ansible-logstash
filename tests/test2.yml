@@ -1,0 +1,7 @@
+---
+- hosts: localhost
+  remote_user: root
+  vars:
+      logstash_cfg_file_glob: "/etc/ansible/roles/role_under_test/tests/files/*.conf"
+  roles:
+    - role_under_test

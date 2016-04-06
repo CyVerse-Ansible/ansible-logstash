@@ -1,0 +1,29 @@
+---
+# tasks file for ansible-logstash
+- name: check-parameters
+  include: check.yaml
+  tags:
+      - check
+
+- name: os-specific vars
+  include_vars: "{{ item }}"
+  with_first_found:
+      - "{{ ansible_distrubution }}-{{ansible_distribution_version}}.yaml"
+      - "{{ ansible_os_family }}.yaml"
+
+- include: java.yaml
+  tags:
+      - java
+
+- include: logstash.yaml
+  tags:
+      - install
+
+- include: config.yaml
+  tags:
+      - config
+
+- include: plugins.yaml
+  tags: 
+      - plugins
+

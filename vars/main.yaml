@@ -1,0 +1,3 @@
+---
+# vars file for ansible-logstash
+logstash_gpgkey: "https://packages.elastic.co/GPG-KEY-elasticsearch"

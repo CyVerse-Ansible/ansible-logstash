@@ -1,0 +1,5 @@
+---
+- when: logstash_version | version_compare('2.0', '<')
+  block:
+      - debug: var=logstash_version
+      - fail: msg="`logstash_version` variable must be at least `2.0`"

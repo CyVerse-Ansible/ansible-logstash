@@ -1,0 +1,131 @@
+---
+sudo: required
+services:
+  - docker
+env: 
+  - distribution: centos
+    version: 7
+    init: /usr/lib/systemd/systemd
+    run_opts: "--privileged --volume=/sys/fs/cgroup:/sys/fs/cgroup:ro"
+  - distribution: ubuntu
+    version: 15.04
+    init: /lib/systemd/systemd
+    run_opts: "--privileged --volume=/sys/fs/cgroup:/sys/fs/cgroup:ro"
+  - distribution: ubuntu
+    version: 16.04
+    init: /lib/systemd/systemd
+    run_opts: "--privileged --volume=/sys/fs/cgroup:/sys/fs/cgroup:ro"
+
+before_install:
+    # Pull image
+    - 'sudo docker pull ${distribution}:${version}'
+      # Customize Container
+    - 'sudo docker build --rm=true --file=tests/Dockerfile.${distribution}-${version} --tag=${distribution}-${version}:ansible tests'
+
+script:
+    - container_id=$(mktemp)
+      # Run container in detached state
+    - 'sudo docker run --detach --volume="${PWD}":/etc/ansible/roles/role_under_test:ro ${run_opts} ${distribution}-${version}:ansible "${init}" > "${container_id}"'
+    - 'sudo docker exec "$(cat ${container_id})" ansible-galaxy install cyverse.geoip'
+      ## TEST: Ansible syntax check.
+    - 'sudo docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook /etc/ansible/roles/role_under_test/tests/test.yml --syntax-check'
+
+
+      ###############################################
+      #### TEST: 1 - 
+      ###############################################
+      ## Verify Logstash not yet installed
+    - >
+        sudo docker exec "$(cat ${container_id})" /opt/logstash/bin/logstash --version 
+        | grep -q '.*2\.3\.0'
+        && (echo 'Logstash installed: fail' && exit 1)
+        || (echo 'Logstash not installed: pass' && exit 0)
+      ## Execute role with default values
+    - 'sudo docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook /etc/ansible/roles/role_under_test/tests/test.yml --extra-vars "logstash_version=2.3"'
+      ## Verify Logstash now installed
+    - >
+        sudo docker exec "$(cat ${container_id})" bash -c "JAVACMD=/usr/bin/java /opt/logstash/bin/logstash --version 
+        | grep -q '.*2\.3\.0'
+        && (echo 'Logstash installed: pass' && exit 0)
+        || (echo 'Logstash not installed: fail' && exit 1)"
+      ## Verify role idempotence.
+    - >
+        sudo docker exec "$(cat ${container_id})" ansible-playbook /etc/ansible/roles/role_under_test/tests/test.yml --extra-vars "logstash_version=2.3"
+        | grep -q 'changed=0.*failed=0'
+        && (echo 'Idempotence test: pass' && exit 0)
+        || (echo 'Idempotence test: fail' && exit 1)
+      ## Verify geoip installation.
+    - >
+        sudo docker exec "$(cat ${container_id})" ansible-playbook /etc/ansible/roles/role_under_test/tests/test.yml --extra-vars "logstash_version=2.3 logstash_geoip=true"
+        | grep -q 'changed=3.*failed=0'
+        && (echo 'Correct number of changes detected: pass' && exit 0)
+        || (echo 'Wrong number of changes detected: fail' && exit 1)
+
+      #################################################
+      #### TEST: 2 - Logstash non-template config files
+      #################################################
+      ## Execute role with default values
+    - 'sudo docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook /etc/ansible/roles/role_under_test/tests/test2.yml'
+    - > 
+        sudo docker exec "$(cat ${container_id})" ls /etc/logstash/conf.d/01-input.conf &>/dev/null 
+        && (echo "Input config file exists: pass" && exit 0) 
+        || (echo "Input config file does not exist: fail" && exit 1)
+      ## Verify role idempotence.
+    - >
+        sudo docker exec "$(cat ${container_id})" ansible-playbook /etc/ansible/roles/role_under_test/tests/test2.yml
+        | grep -q 'changed=0.*failed=0'
+        && (echo 'Idempotence test: pass' && exit 0)
+        || (echo 'Idempotence test: fail' && exit 1)
+      ## Verify config overwrite.
+    - >
+        sudo docker exec "$(cat ${container_id})" ansible-playbook /etc/ansible/roles/role_under_test/tests/test2.yml --extra-vars "logstash_clean_cfg_dir=true"
+        | grep -q 'changed=4.*failed=0'
+        && (echo 'Config files unchanged: fail' && exit 1)
+        || (echo 'Config files changed: pass' && exit 0)
+
+      ###############################################
+      #### TEST: 3 - Logstash template config files
+      ###############################################
+      ## Execute role with default values
+    - 'sudo docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook /etc/ansible/roles/role_under_test/tests/test3.yml'
+    - > 
+        sudo docker exec "$(cat ${container_id})" ls /etc/logstash/conf.d/90-output.conf &>/dev/null 
+        && (echo "Output config file exists: pass" && exit 0) 
+        || (echo "Output config file does not exist: fail" && exit 1)
+      ## Verify role idempotence.
+    - >
+        sudo docker exec "$(cat ${container_id})" ansible-playbook /etc/ansible/roles/role_under_test/tests/test3.yml
+        | grep -q 'changed=0.*failed=0'
+        && (echo 'Idempotence test: pass' && exit 0)
+        || (echo 'Idempotence test: fail' && exit 1)
+      ## Verify config overwrite.
+    - >
+        sudo docker exec "$(cat ${container_id})" ansible-playbook /etc/ansible/roles/role_under_test/tests/test3.yml --extra-vars "logstash_clean_cfg_dir=true"
+        | grep -q 'changed=4.*failed=0'
+        && (echo 'Config files unchanged: fail' && exit 1)
+        || (echo 'Config files changed: pass' && exit 0)
+
+      ###############################################
+      #### TEST: 4 - Alternate config directory
+      ###############################################
+      ## Execute role with default values
+    - 'sudo docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook /etc/ansible/roles/role_under_test/tests/test4.yml'
+    - > 
+        sudo docker exec "$(cat ${container_id})" ls /etc/logstash/alt1/conf.d/90-output.conf &>/dev/null 
+        && (echo "Output config file exists: pass" && exit 0) 
+        || (echo "Output config file does not exist: fail" && exit 1)
+      ## Verify role idempotence.
+    - >
+        sudo docker exec "$(cat ${container_id})" ansible-playbook /etc/ansible/roles/role_under_test/tests/test4.yml
+        | grep -q 'changed=0.*failed=0'
+        && (echo 'Idempotence test: pass' && exit 0)
+        || (echo 'Idempotence test: fail' && exit 1)
+      ## Verify config overwrite.
+    - >
+        sudo docker exec "$(cat ${container_id})" ansible-playbook /etc/ansible/roles/role_under_test/tests/test4.yml --extra-vars "logstash_clean_cfg_dir=true"
+        | grep -q 'changed=5.*failed=0'
+        && (echo 'Config files unchanged: fail' && exit 1)
+        || (echo 'Config files changed: pass' && exit 0)
+
+notifications:
+  webhooks: https://galaxy.ansible.com/api/v1/notifications/

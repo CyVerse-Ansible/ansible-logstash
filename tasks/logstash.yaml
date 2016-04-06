@@ -1,0 +1,8 @@
+---
+- when: logstash_install
+  block:
+       - include: Ubuntu.yaml
+         when: ansible_distribution == 'Ubuntu'
+       - include: CentOS.yaml
+         when: ansible_distribution == "CentOS"
+
