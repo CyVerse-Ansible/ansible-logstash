@@ -37,7 +37,7 @@ script:
       ## Verify Logstash not yet installed
     - >
         sudo docker exec "$(cat ${container_id})" /opt/logstash/bin/logstash --version 
-        | grep -q '.*2\.3\.0'
+        | grep -q '.*2\.3\..'
         && (echo 'Logstash installed: fail' && exit 1)
         || (echo 'Logstash not installed: pass' && exit 0)
       ## Execute role with default values
@@ -45,7 +45,7 @@ script:
       ## Verify Logstash now installed
     - >
         sudo docker exec "$(cat ${container_id})" bash -c "JAVACMD=/usr/bin/java /opt/logstash/bin/logstash --version 
-        | grep -q '.*2\.3\.0'
+        | grep -q '.*2\.3\..'
         && (echo 'Logstash installed: pass' && exit 0)
         || (echo 'Logstash not installed: fail' && exit 1)"
       ## Verify role idempotence.
