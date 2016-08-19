@@ -1,6 +1,6 @@
 ansible-logstash
 ================
-[![Build Status](https://travis-ci.org/cyverse/ansible-logstash.svg?branch=master)](https://travis-ci.org/cyverse/ansible-logstash)
+[![Build Status](https://travis-ci.org/CyVerse-Ansible/ansible-logstash.svg?branch=master)](https://travis-ci.org/CyVerse-Ansible/ansible-logstash)
 
 Installs logstash on a remote host.
 
