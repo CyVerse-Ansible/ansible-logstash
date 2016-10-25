@@ -1,6 +1,11 @@
 ---
 # handlers file for ansible-logstash
 - name: restart logstash
+  when: logstash_restart_on_change and 
+        ((cfg_files is defined and cfg_files.changed) or
+         (cfg_templates is defined and cfg_templates.changed) or
+         (cfg_files_glob is defined and cfg_files_glob.changed) or
+         (cfg_templates_glob is defined and cfg_templates_glob.changed))
   service:  
     name: logstash
     state: restarted

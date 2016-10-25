@@ -4,6 +4,9 @@ ansible-logstash
 
 Installs logstash on a remote host.
 
+* TODO: Update role to update `/etc/default/logstash` with specific variables.
+  * This is to allow setting some alternative CLI flags for logstash.
+
 Requirements
 ------------
 
@@ -18,7 +21,10 @@ Role Variables
 | logstash_version                   |  no      | "2.3"                   |         | The version of Logstash to install |
 | logstash_install                   |  no      | true                    |         | A flag used to control whether the role should perform installation steps. |
 | logstash_clean_cfg_dir             |  no      | false                   |         | Determines whether the cfg dir will be cleaned prior to uploading new ones.|
+| logstash_restart_on_change         |  no      | true                    |         | Determines whether the cfg dir will be cleaned prior to uploading new ones.|
 | logstash_cfg_dir                   |  no      | "/etc/logstash/conf.d"  |         | Logstash's config directory. |
+| logstash_cfg_templates             |  no      | "[]"                    |         | A list of paths to template and copy to the `cfg_dir`. See the ansible `template` command for details. |
+| logstash_cfg_files                 |  no      | "[]"                    |         | A list of paths to copy to the `cfg_dir`. See the ansible `copy` command for details. |
 | logstash_cfg_template_glob         |  no      |                         |         | Optionally specify a glob pattern to a directory containing template config files.[1] |
 | logstash_cfg_file_glob             |  no      |                         |         | Optionally specify a glob pattern to a directory containing static config files.[1] |
 | logstash_base_dir                  |  no      | "/opt/logstash"         |         | Logstash's install location. |

@@ -1,40 +1,68 @@
 ---
+- when: logstash_clean_cfg_dir
+  name: Clean configuration directory
+  file: 
+    path: "{{ logstash_cfg_dir }}"
+    state: absent
+
+- name: Ensure configuration directory exists
+  file: 
+    path: "{{ logstash_cfg_dir }}"
+    state: directory
+    owner: logstash
+    group: logstash
+    mode: 0700
+
+- block:
+    - name: Add configuration files
+      copy: 
+          src: "{{ item }}" 
+          dest: "{{ logstash_cfg_dir }}" 
+          owner: logstash 
+          group: logstash 
+          mode: 0600
+      with_items: "{{ logstash_cfg_files }}"
+      register: cfg_files
+      notify:
+          - restart logstash
+      
+    - name: Add configuration template files
+      template: 
+          src: "{{ item }}" 
+          dest: "{{ logstash_cfg_dir }}" 
+          owner: logstash 
+          group: logstash 
+          mode: 0600
+      with_items: "{{ logstash_cfg_templates }}"
+      register: cfg_templates
+      notify:
+          - restart logstash
+
 - when: (logstash_cfg_file_glob is defined) or (logstash_cfg_template_glob is defined)
   block:
-      - debug: var=logstash_clean_cfg_dir
-      - name: Clean configuration directory
-        when: logstash_clean_cfg_dir
-        file: 
-          path: "{{ logstash_cfg_dir }}"
-          state: absent
-      - name: Ensure configuration directory exists
-        file: 
-          path: "{{ logstash_cfg_dir }}"
-          state: directory
-          owner: logstash
-          group: logstash
-          mode: 0700
-      - name: Add configuration files
-        when: logstash_cfg_file_glob is defined
-        copy: 
-            src: "{{ item }}" 
-            dest: "{{ logstash_cfg_dir }}" 
-            owner: logstash 
-            group: logstash 
-            mode: 0600
-        with_fileglob: "{{ logstash_cfg_file_glob | default('') }}"
-        notify:
-            - restart logstash
-        
-      - name: Add configuration template files
-        when: logstash_cfg_template_glob is defined
-        template: 
-            src: "{{ item }}" 
-            dest: "{{ logstash_cfg_dir }}" 
-            owner: logstash 
-            group: logstash 
-            mode: 0600
-        with_fileglob: "{{ logstash_cfg_template_glob | default('') }}"
-        notify:
-            - restart logstash
+    - name: Add configuration files
+      when: logstash_cfg_file_glob is defined
+      copy: 
+          src: "{{ item }}" 
+          dest: "{{ logstash_cfg_dir }}" 
+          owner: logstash 
+          group: logstash 
+          mode: 0600
+      with_fileglob: "{{ logstash_cfg_file_glob | default('') }}"
+      register: cfg_files_glob
+      notify:
+          - restart logstash
+      
+    - name: Add configuration template files
+      when: logstash_cfg_template_glob is defined
+      template: 
+          src: "{{ item }}" 
+          dest: "{{ logstash_cfg_dir }}" 
+          owner: logstash 
+          group: logstash 
+          mode: 0600
+      with_fileglob: "{{ logstash_cfg_template_glob | default('') }}"
+      register: cfg_templates_glob
+      notify:
+          - restart logstash
 
