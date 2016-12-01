@@ -18,6 +18,7 @@
   apt: 
     name: logstash
     update_cache: yes
+    allow_unauthenticated: yes
     state: present
   tags: 
      - install
