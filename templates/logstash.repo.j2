@@ -1,7 +1,10 @@
 [logstash-{{logstash_version}}]
 name=Logstash repository for {{logstash_version}}.x packages
+{% if logstash_version| float >= 5.0 %}
+baseurl=https://artifacts.elastic.co/packages/{{logstash_version| first}}.x/yum
+{% else %}
 baseurl=http://packages.elastic.co/logstash/{{logstash_version}}/centos
+{% endif %}
 gpgcheck=1
 gpgkey={{logstash_gpgkey}}
 enabled=1
-
